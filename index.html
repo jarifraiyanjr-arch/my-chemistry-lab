@@ -1,60 +1,2065 @@
-<!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>NOVA LAB - Virtual Chemistry Lab</title>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Virtual Chemistry Lab</title>
+
 <style>
-*{box-sizing:border-box}body{margin:0;background:#07111d;color:#eef7ff;font:14px Segoe UI,Arial;overflow:hidden}
-:root{--p:#0b1727;--p2:#101f33;--l:#29405b;--c:#22d3ee}
-header{height:60px;background:#070d16;border-bottom:1px solid var(--l);display:flex;align-items:center;justify-content:space-between;padding:0 16px}.brand{display:flex;align-items:center;gap:10px}.logo{width:40px;height:40px;border-radius:11px;background:linear-gradient(135deg,#06b6d4,#2563eb,#7c3aed);display:grid;place-items:center;font-size:22px}.title{font-weight:900;letter-spacing:1px;color:#67e8f9}.sub{font-size:8px;color:#7188a2;letter-spacing:2px;display:block}
-button{font:inherit}.top button,.tool{background:#122137;color:#eef7ff;border:1px solid var(--l);border-radius:7px;padding:8px 10px;cursor:pointer}.top button:hover,.tool:hover{border-color:var(--c);background:#193553}
-#app{height:calc(100vh - 60px);display:flex}aside{width:355px;background:#091423;border-right:1px solid var(--l);padding:11px;overflow:auto}.st{color:#67e8f9;font-weight:800;font-size:12px;margin:9px 0 6px}.box{background:#0c192a;border:1px solid var(--l);border-radius:9px;padding:8px;margin-bottom:8px}.tool{display:block;width:100%;margin:4px 0;text-align:left;font-size:11px}.clear{background:#dc2626!important;border:0!important;font-weight:800}.search{width:100%;padding:8px;background:#071321;color:white;border:1px solid var(--l);border-radius:6px;margin-bottom:7px}
-.ptwrap{overflow:auto}.pt{display:grid;grid-template-columns:repeat(18,38px);gap:3px}.el{height:45px;background:#101f33;border:1px solid #304762;border-radius:5px;cursor:pointer;text-align:center;padding:2px;position:relative}.el:hover{border-color:var(--c);background:#193653}.el b{display:block;margin-top:8px;font-size:12px}.el small{font-size:5px;color:#8da4bd}.num{position:absolute;left:2px;top:1px;font-size:6px;color:#7086a0}.blank{visibility:hidden}.lan{margin-top:5px}
-#lab{flex:1;position:relative;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle,#20354e,#0b1727 55%,#07111d)}canvas{width:min(1100px,calc(100% - 20px));height:auto;max-height:calc(100% - 20px);background:#081321;border:1px solid #304761;border-radius:14px;box-shadow:0 20px 70px #0008}.hud{position:absolute;left:16px;bottom:16px;display:flex;gap:6px;flex-wrap:wrap}.hud span{background:#07111de8;border:1px solid var(--l);border-radius:7px;padding:7px 9px;font-size:11px}.hud b{color:#67e8f9}
-.modal{position:fixed;inset:0;background:#000b;backdrop-filter:blur(5px);display:none;align-items:center;justify-content:center;z-index:20}.card{width:470px;max-width:92%;max-height:90vh;overflow:auto;background:#0c192a;border:1px solid #36506c;border-radius:14px;padding:20px;box-shadow:0 30px 90px #000b}.card h2{margin:0 0 10px;color:#67e8f9}.card p{color:#a8bad0;line-height:1.6}.actions{display:flex;gap:8px}.actions>*{flex:1;padding:10px;border:0;border-radius:7px;text-align:center;text-decoration:none;font-weight:800;cursor:pointer}.yes{background:#22d3ee;color:#06131d}.no{background:#334155;color:white}.reaction{background:#101f33;border:1px solid #2c425d;border-radius:7px;padding:9px;margin:5px 0;font-size:11px}#toast{position:fixed;right:20px;bottom:20px;background:#102239;border:1px solid #36506c;border-radius:9px;padding:11px 15px;display:none;z-index:50}
-</style></head><body>
-<header><div class="brand"><div class="logo">⚗</div><div><div class="title">NOVA LAB</div><span class="sub">VIRTUAL CHEMISTRY LAB</span></div></div><div class="top"><button id="lib">📚 Reactions</button> <button id="help">❓ Help</button></div></header>
-<div id="app"><aside>
-<div class="st">EQUIPMENT</div><div class="box" id="equip"></div>
-<div class="st">IMPORTANT ACIDS, BASES & SALTS</div><div class="box" id="chem"></div>
-<div class="st">PERIODIC TABLE • 118 ELEMENTS</div><div class="box"><input class="search" id="search" placeholder="Search element..."><div class="ptwrap"><div class="pt" id="pt"></div><div class="pt" id="lan"></div></div></div>
-<button class="tool clear" id="clear">🧹 Clear Workbench</button>
-</aside><main id="lab"><canvas id="cv" width="1100" height="680"></canvas><div class="hud"><span>pH <b id="ph">7.0</b></span><span>Heat <b id="heat">25°C</b></span><span>Objects <b id="cnt">0</b></span><span>Status <b id="stat">Ready</b></span></div></main></div>
-<div class="modal" id="rx"><div class="card"><h2>⚗️ Reaction Detected</h2><p id="rxt"></p><div class="actions"><button class="yes" id="combine">⚡ Combine</button><button class="no" id="cancel">Cancel</button></div></div></div>
-<div class="modal" id="libm"><div class="card"><h2>📚 Reaction Library</h2><div id="logs"></div><button class="no" style="width:100%" onclick="closeM('libm')">Close</button></div></div>
-<div class="modal" id="helpm"><div class="card"><h2>❓ Help & Support</h2><p>Drag objects around the workbench. Put glassware on the tripod and a burner beneath it to heat. Put compatible substances close together to trigger Combine/Cancel.</p><p><b style="color:#67e8f9">jarifraiyan@gmail.com</b></p><div class="actions"><a class="yes" href="mailto:jarifraiyan@gmail.com?subject=NOVA%20LAB%20Support">Send Email</a><button class="no" onclick="closeM('helpm')">Close</button></div></div></div><div id="toast"></div>
+*{box-sizing:border-box}
+
+:root{
+  --bg:#07111e;
+  --panel:#0d1b2c;
+  --panel2:#12263d;
+  --line:#294967;
+  --text:#eef7ff;
+  --muted:#9db3c9;
+  --blue:#4ebcff;
+  --green:#43dfa0;
+  --red:#ff6578;
+}
+
+body{
+  margin:0;
+  height:100vh;
+  overflow:hidden;
+  font-family:Segoe UI,Arial,sans-serif;
+  color:var(--text);
+  background:#07111e;
+}
+
+/* HEADER */
+
+header{
+  height:72px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:10px 18px;
+  background:#091728;
+  border-bottom:1px solid var(--line);
+}
+
+.logo{
+  display:flex;
+  align-items:center;
+  gap:12px;
+}
+
+.logoIcon{
+  font-size:36px;
+}
+
+.logo h1{
+  margin:0;
+  font-size:21px;
+}
+
+.logo small{
+  color:var(--muted);
+}
+
+button{
+  border:1px solid var(--line);
+  background:#142b45;
+  color:white;
+  padding:11px 15px;
+  border-radius:10px;
+  font-weight:bold;
+  cursor:pointer;
+}
+
+button:hover{
+  background:#1c3b5d;
+}
+
+/* MAIN */
+
+.main{
+  height:calc(100vh - 72px);
+  display:grid;
+  grid-template-columns:260px 1fr 270px;
+}
+
+/* SIDEBARS */
+
+.sidebar,
+.infoPanel{
+  background:#0b192a;
+  padding:15px;
+  overflow:auto;
+}
+
+.sidebar{
+  border-right:1px solid var(--line);
+}
+
+.infoPanel{
+  border-left:1px solid var(--line);
+}
+
+h2{
+  font-size:14px;
+  letter-spacing:1px;
+  color:#cfe5fa;
+  margin:6px 0 12px;
+  text-transform:uppercase;
+}
+
+/* PALETTE */
+
+.palette{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:9px;
+}
+
+.paletteItem{
+  min-height:100px;
+  border:1px solid var(--line);
+  border-radius:14px;
+  background:linear-gradient(145deg,#142b45,#0d1d30);
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
+  cursor:grab;
+  user-select:none;
+  transition:.15s;
+}
+
+.paletteItem:hover{
+  transform:translateY(-2px);
+  border-color:#5fbfff;
+}
+
+.paletteIcon{
+  font-size:45px;
+}
+
+.paletteName{
+  font-size:11px;
+  margin-top:5px;
+  text-align:center;
+  color:#c9dced;
+}
+
+/* LAB */
+
+.lab{
+  position:relative;
+  overflow:hidden;
+  background:
+    radial-gradient(circle at 50% 40%,#18345155,transparent 45%),
+    linear-gradient(#091625,#07101b);
+}
+
+.lab:before{
+  content:"";
+  position:absolute;
+  inset:0;
+  background-image:
+    linear-gradient(#ffffff04 1px,transparent 1px),
+    linear-gradient(90deg,#ffffff04 1px,transparent 1px);
+  background-size:40px 40px;
+  pointer-events:none;
+}
+
+.table{
+  position:absolute;
+  left:4%;
+  right:4%;
+  bottom:40px;
+  height:12px;
+  background:linear-gradient(#8797a6,#263746);
+  border-radius:8px;
+  box-shadow:0 5px 20px #0009;
+}
+
+.floor{
+  position:absolute;
+  left:0;
+  right:0;
+  bottom:0;
+  height:40px;
+  background:#07101a;
+  border-top:1px solid #263b50;
+}
+
+/* OBJECTS */
+
+.object{
+  position:absolute;
+  z-index:10;
+  user-select:none;
+  touch-action:none;
+  cursor:grab;
+}
+
+.object.dragging{
+  cursor:grabbing;
+  z-index:100;
+  filter:drop-shadow(0 15px 18px #000b);
+}
+
+.object.selected{
+  outline:2px solid #57c5ff;
+  outline-offset:5px;
+}
+
+/* LABEL */
+
+.objectLabel{
+  position:absolute;
+  top:100%;
+  left:50%;
+  transform:translateX(-50%);
+  white-space:nowrap;
+  margin-top:6px;
+  font-size:11px;
+  color:#b9cee2;
+  pointer-events:none;
+}
+
+/* BEAKER */
+
+.beaker{
+  width:115px;
+  height:135px;
+  position:relative;
+  border:4px solid #b9edff;
+  border-top:0;
+  border-radius:5px 5px 30px 30px;
+  background:
+    linear-gradient(90deg,#ffffff20,#8edfff08 45%,#ffffff22);
+  box-shadow:
+    inset 10px 0 14px #fff2,
+    inset -8px 0 12px #6ed8ff19;
+}
+
+.beaker:before{
+  content:"";
+  position:absolute;
+  top:-9px;
+  left:-7px;
+  width:109px;
+  height:10px;
+  border:4px solid #c9f2ff;
+  border-radius:5px;
+  background:#ffffff10;
+}
+
+.beakerMarks{
+  position:absolute;
+  right:8px;
+  top:25px;
+  width:18px;
+  height:80px;
+  background:
+    repeating-linear-gradient(
+      to bottom,
+      transparent 0 14px,
+      #d8f7ff99 14px 16px
+    );
+}
+
+.liquid{
+  position:absolute;
+  bottom:0;
+  left:1px;
+  right:1px;
+  height:0;
+  border-radius:0 0 25px 25px;
+  transition:.5s;
+  overflow:hidden;
+}
+
+.liquid:before{
+  content:"";
+  position:absolute;
+  top:0;
+  left:-10%;
+  width:120%;
+  height:5px;
+  background:#ffffff44;
+  border-radius:50%;
+}
+
+/* TEST TUBE */
+
+.testTube{
+  width:62px;
+  height:155px;
+  position:relative;
+  border:4px solid #c4efff;
+  border-top:0;
+  border-radius:0 0 31px 31px;
+  background:
+    linear-gradient(
+      90deg,
+      #ffffff2c,
+      #7ddcff08 35%,
+      #ffffff25 72%,
+      #ffffff09
+    );
+  box-shadow:
+    inset 10px 0 13px #ffffff22,
+    inset -7px 0 12px #6ed8ff18;
+}
+
+.testTube:before{
+  content:"";
+  position:absolute;
+  top:-9px;
+  left:-7px;
+  width:61px;
+  height:10px;
+  border:4px solid #d0f3ff;
+  border-radius:6px;
+  background:#ffffff12;
+}
+
+.testTube .liquid{
+  border-radius:0 0 27px 27px;
+}
+
+.bubble{
+  position:absolute;
+  bottom:8px;
+  width:6px;
+  height:6px;
+  border:1px solid white;
+  border-radius:50%;
+  opacity:0;
+}
+
+.heating .bubble{
+  opacity:.8;
+  animation:rise 1.3s infinite;
+}
+
+.b1{left:12px}
+.b2{left:27px;animation-delay:.35s!important}
+.b3{left:39px;animation-delay:.7s!important}
+
+@keyframes rise{
+  from{transform:translateY(0);opacity:.2}
+  to{transform:translateY(-65px);opacity:1}
+}
+
+/* FLASK */
+
+.flask{
+  width:130px;
+  height:135px;
+  position:relative;
+}
+
+.flaskNeck{
+  position:absolute;
+  top:0;
+  left:47px;
+  width:36px;
+  height:52px;
+  border:4px solid #c4efff;
+  border-bottom:0;
+  background:#ffffff0c;
+}
+
+.flaskBody{
+  position:absolute;
+  left:10px;
+  top:39px;
+  width:110px;
+  height:96px;
+  border:4px solid #c4efff;
+  border-radius:48% 48% 28px 28px;
+  overflow:hidden;
+  background:#ffffff0c;
+  box-shadow:inset 12px 0 14px #fff2;
+}
+
+/* RETORT STAND */
+
+.stand{
+  width:165px;
+  height:225px;
+  position:relative;
+}
+
+.standBase{
+  position:absolute;
+  bottom:0;
+  left:2px;
+  width:160px;
+  height:18px;
+  border-radius:9px;
+  background:linear-gradient(#a8b6c1,#344451);
+  border:2px solid #c4d0d8;
+  box-shadow:0 4px 12px #0008;
+}
+
+.standRod{
+  position:absolute;
+  bottom:14px;
+  left:32px;
+  width:13px;
+  height:204px;
+  border-radius:7px;
+  background:linear-gradient(
+    90deg,
+    #46545f,
+    #dce5eb,
+    #687781
+  );
+}
+
+.clampArm{
+  position:absolute;
+  left:38px;
+  top:70px;
+  width:83px;
+  height:18px;
+  border:5px solid #82939f;
+  border-left:0;
+  border-radius:0 12px 12px 0;
+}
+
+.clampJaw{
+  position:absolute;
+  right:-11px;
+  top:-8px;
+  width:15px;
+  height:30px;
+  border-radius:8px;
+  background:#63737e;
+}
+
+.stand.attached .clampArm{
+  box-shadow:0 0 16px #56c8ff66;
+}
+
+/* BURNER */
+
+.burner{
+  width:120px;
+  height:115px;
+  position:relative;
+}
+
+.burnerBase{
+  position:absolute;
+  bottom:0;
+  left:5px;
+  width:110px;
+  height:23px;
+  border-radius:50%;
+  background:linear-gradient(#9caab4,#303b45);
+  border:2px solid #c0cbd2;
+}
+
+.burnerStem{
+  position:absolute;
+  bottom:19px;
+  left:42px;
+  width:36px;
+  height:61px;
+  border-radius:8px 8px 3px 3px;
+  background:linear-gradient(
+    90deg,
+    #4b5964,
+    #d5dee3,
+    #5b6872
+  );
+}
+
+.airHole{
+  position:absolute;
+  bottom:42px;
+  left:48px;
+  width:24px;
+  height:16px;
+  border-radius:50%;
+  background:#17232e;
+  border:2px solid #b3c0c9;
+}
+
+.flame{
+  position:absolute;
+  bottom:70px;
+  left:43px;
+  width:35px;
+  height:49px;
+  clip-path:polygon(
+    50% 0,
+    74% 30%,
+    100% 55%,
+    76% 100%,
+    28% 92%,
+    0 55%,
+    30% 38%
+  );
+  background:
+    linear-gradient(
+      #f4fbff 4%,
+      #64d1ff 35%,
+      #218dff 75%,
+      transparent
+    );
+  filter:drop-shadow(0 0 10px #43bfff);
+  animation:flame .55s infinite alternate;
+}
+
+.spirit .flame{
+  background:
+    linear-gradient(
+      #fff 5%,
+      #ffd866 36%,
+      #ff8526 72%,
+      transparent
+    );
+  filter:drop-shadow(0 0 10px #ff9e35);
+}
+
+@keyframes flame{
+  to{
+    transform:scaleY(1.12) rotate(2deg);
+  }
+}
+
+/* CHEMICAL */
+
+.chemical{
+  width:90px;
+  height:90px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  border-radius:20px;
+  background:#132943;
+  border:2px solid #4c6d8b;
+  font-size:55px;
+}
+
+/* HEATING */
+
+.heating{
+  filter:drop-shadow(0 0 13px #ff9e3d88);
+}
+
+.heating .liquid{
+  animation:boil .45s infinite alternate;
+}
+
+@keyframes boil{
+  from{transform:translateY(0)}
+  to{transform:translateY(-3px)}
+}
+
+/* RIGHT PANEL */
+
+.infoBox{
+  background:#10253b;
+  border:1px solid var(--line);
+  padding:13px;
+  border-radius:12px;
+  margin-bottom:12px;
+  font-size:12px;
+  line-height:1.6;
+  color:#bdd0e2;
+}
+
+.status{
+  display:flex;
+  gap:8px;
+  align-items:center;
+  margin-bottom:7px;
+}
+
+.statusDot{
+  width:10px;
+  height:10px;
+  border-radius:50%;
+  background:#ffae42;
+}
+
+.statusDot.active{
+  background:#43dfa0;
+  box-shadow:0 0 9px #43dfa0;
+}
+
+/* MODAL */
+
+.modal{
+  position:fixed;
+  inset:0;
+  background:#000b;
+  display:none;
+  align-items:center;
+  justify-content:center;
+  z-index:500;
+}
+
+.modal.show{
+  display:flex;
+}
+
+.modalCard{
+  width:350px;
+  padding:25px;
+  border-radius:20px;
+  background:#11253b;
+  border:1px solid #47769c;
+  box-shadow:0 25px 80px #000;
+  text-align:center;
+}
+
+.modalCard h3{
+  margin:0 0 8px;
+  font-size:22px;
+}
+
+.modalCard p{
+  color:#aec3d7;
+  font-size:13px;
+}
+
+.modalButtons{
+  display:flex;
+  gap:10px;
+  margin-top:20px;
+}
+
+.modalButtons button{
+  flex:1;
+  padding:14px;
+}
+
+.combineBtn{
+  background:#35d998;
+  color:#062216;
+}
+
+.cancelBtn{
+  background:#3c4f63;
+}
+
+/* TOAST */
+
+.toast{
+  position:fixed;
+  right:25px;
+  bottom:25px;
+  background:#122a42;
+  border:1px solid #477296;
+  border-radius:12px;
+  padding:13px 17px;
+  z-index:600;
+  display:none;
+  box-shadow:0 12px 35px #0009;
+}
+
+.toast.show{
+  display:block;
+}
+
+/* PERIODIC TABLE */
+
+.periodic{
+  display:grid;
+  grid-template-columns:repeat(5,1fr);
+  gap:4px;
+}
+
+.element{
+  background:#193653;
+  border:1px solid #315676;
+  border-radius:5px;
+  padding:5px 2px;
+  text-align:center;
+  font-size:9px;
+}
+
+.element strong{
+  display:block;
+  font-size:13px;
+}
+
+/* RESPONSIVE */
+
+@media(max-width:1000px){
+  .main{
+    grid-template-columns:210px 1fr 220px;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<header>
+
+<div class="logo">
+<div class="logoIcon">⚗️</div>
+<div>
+<h1>Virtual Chemistry Lab</h1>
+<small>Drag • Pour • Combine • Heat</small>
+</div>
+</div>
+
+<div>
+<button onclick="showPeriodic()">Periodic Table</button>
+<button onclick="clearLab()">Clear Lab</button>
+</div>
+
+</header>
+
+<div class="main">
+
+<!-- LEFT -->
+
+<aside class="sidebar">
+
+<h2>Chemicals</h2>
+
+<div class="palette">
+
+<div class="paletteItem" draggable="true"
+data-kind="chemical"
+data-name="Water"
+data-formula="H₂O"
+data-color="#4caaff">
+<div class="paletteIcon">💧</div>
+<div class="paletteName">Water · H₂O</div>
+</div>
+
+<div class="paletteItem" draggable="true"
+data-kind="chemical"
+data-name="Hydrochloric Acid"
+data-formula="HCl"
+data-color="#c9edff">
+<div class="paletteIcon">🧪</div>
+<div class="paletteName">Hydrochloric Acid</div>
+</div>
+
+<div class="paletteItem" draggable="true"
+data-kind="chemical"
+data-name="Sodium Hydroxide"
+data-formula="NaOH"
+data-color="#d5b6ff">
+<div class="paletteIcon">🧪</div>
+<div class="paletteName">Sodium Hydroxide</div>
+</div>
+
+<div class="paletteItem" draggable="true"
+data-kind="chemical"
+data-name="Calcium Carbonate"
+data-formula="CaCO₃"
+data-color="#f5f5f5">
+<div class="paletteIcon">⚪</div>
+<div class="paletteName">Calcium Carbonate</div>
+</div>
+
+<div class="paletteItem" draggable="true"
+data-kind="chemical"
+data-name="Sodium Carbonate"
+data-formula="Na₂CO₃"
+data-color="#e9f4ff">
+<div class="paletteIcon">🧂</div>
+<div class="paletteName">Sodium Carbonate</div>
+</div>
+
+<div class="paletteItem" draggable="true"
+data-kind="chemical"
+data-name="Magnesium Oxide"
+data-formula="MgO"
+data-color="#eeeeee">
+<div class="paletteIcon">⬜</div>
+<div class="paletteName">Magnesium Oxide</div>
+</div>
+
+<div class="paletteItem" draggable="true"
+data-kind="chemical"
+data-name="Copper Sulfate"
+data-formula="CuSO₄"
+data-color="#249eff">
+<div class="paletteIcon">🔵</div>
+<div class="paletteName">Copper Sulfate</div>
+</div>
+
+<div class="paletteItem" draggable="true"
+data-kind="chemical"
+data-name="Iron"
+data-formula="Fe"
+data-color="#858992">
+<div class="paletteIcon">⚙️</div>
+<div class="paletteName">Iron</div>
+</div>
+
+</div>
+
+<h2 style="margin-top:20px">Apparatus</h2>
+
+<div class="palette">
+
+<div class="paletteItem" draggable="true" data-kind="beaker">
+<div class="paletteIcon">🥛</div>
+<div class="paletteName">Beaker</div>
+</div>
+
+<div class="paletteItem" draggable="true" data-kind="testtube">
+<div class="paletteIcon">🧪</div>
+<div class="paletteName">Test Tube</div>
+</div>
+
+<div class="paletteItem" draggable="true" data-kind="flask">
+<div class="paletteIcon">⚗️</div>
+<div class="paletteName">Conical Flask</div>
+</div>
+
+<div class="paletteItem" draggable="true" data-kind="stand">
+<div class="paletteIcon">🔩</div>
+<div class="paletteName">Retort Stand</div>
+</div>
+
+<div class="paletteItem" draggable="true" data-kind="bunsen">
+<div class="paletteIcon">🔥</div>
+<div class="paletteName">Bunsen Burner</div>
+</div>
+
+<div class="paletteItem" draggable="true" data-kind="spirit">
+<div class="paletteIcon">🕯️</div>
+<div class="paletteName">Spirit Burner</div>
+</div>
+
+</div>
+
+<div class="infoBox" style="margin-top:15px">
+<b>How it works</b><br><br>
+💧 Drag chemicals onto glassware to pour.<br>
+🤝 Put two filled containers together for <b>COMBINE / CANCEL</b>.<br>
+🔥 Put glassware above a burner to heat it.<br>
+🔩 Put glassware on the stand to snap it into the clamp.
+</div>
+
+</aside>
+
+
+<!-- LAB -->
+
+<main class="lab" id="lab">
+
+<div class="table"></div>
+<div class="floor"></div>
+
+</main>
+
+
+<!-- RIGHT -->
+
+<aside class="infoPanel">
+
+<h2>Experiment Status</h2>
+
+<div class="infoBox">
+
+<div class="status">
+<div class="statusDot" id="heatDot"></div>
+<b id="heatText">No container heating</b>
+</div>
+
+<div id="details">
+Drag an apparatus into the laboratory.
+</div>
+
+</div>
+
+<h2>Programmed Reactions</h2>
+
+<div class="infoBox">
+
+<b>HCl + NaOH</b><br>
+NaCl + H₂O
+
+<hr>
+
+<b>HCl + CaCO₃</b><br>
+CaCl₂ + CO₂ + H₂O
+
+<hr>
+
+<b>CuSO₄ + Fe</b><br>
+FeSO₄ + Cu
+
+<hr>
+
+<b>MgO + H₂O</b><br>
+Mg(OH)₂
+
+</div>
+
+<h2>Periodic Table</h2>
+
+<div class="periodic" id="periodic"></div>
+
+</aside>
+
+</div>
+
+
+<!-- COMBINE MODAL -->
+
+<div class="modal" id="combineModal">
+
+<div class="modalCard">
+
+<h3>⚗️ Combine Contents?</h3>
+
+<p id="combineDescription">
+Two substances are ready to be mixed.
+</p>
+
+<div class="modalButtons">
+
+<button class="combineBtn" onclick="confirmCombine()">
+✓ COMBINE
+</button>
+
+<button class="cancelBtn" onclick="cancelCombine()">
+✕ CANCEL
+</button>
+
+</div>
+
+</div>
+
+</div>
+
+
+<div class="toast" id="toast"></div>
+
+
 <script>
+
+const lab=document.getElementById("lab");
+
+let objects=[];
+let objectID=0;
+let drag=null;
+let pendingCombine=null;
+
+
+/* =========================
+REACTIONS
+========================= */
+
+const reactions={
+
+"Hydrochloric Acid|Sodium Hydroxide":{
+name:"Sodium Chloride + Water",
+formula:"NaCl + H₂O",
+color:"#b9e4ff",
+message:"Neutralization reaction occurred."
+},
+
+"Calcium Carbonate|Hydrochloric Acid":{
+name:"Calcium Chloride + Carbon Dioxide + Water",
+formula:"CaCl₂ + CO₂ + H₂O",
+color:"#eaf8ff",
+message:"Fizzing reaction! Carbon dioxide was produced."
+},
+
+"Copper Sulfate|Iron":{
+name:"Iron(II) Sulfate + Copper",
+formula:"FeSO₄ + Cu",
+color:"#6bd09b",
+message:"Displacement reaction occurred."
+},
+
+"Magnesium Oxide|Water":{
+name:"Magnesium Hydroxide",
+formula:"Mg(OH)₂",
+color:"#d8ebff",
+message:"Magnesium oxide reacted with water."
+},
+
+"Sodium Carbonate|Hydrochloric Acid":{
+name:"Sodium Chloride + Carbon Dioxide + Water",
+formula:"NaCl + CO₂ + H₂O",
+color:"#d9edff",
+message:"Carbon dioxide gas was produced."
+}
+
+};
+
+
+function reactionKey(a,b){
+
+return [a,b].sort().join("|");
+
+}
+
+
+/* =========================
+TOAST
+========================= */
+
+function toast(message){
+
+const box=document.getElementById("toast");
+
+box.textContent=message;
+
+box.classList.add("show");
+
+clearTimeout(window.toastTimer);
+
+window.toastTimer=setTimeout(()=>{
+box.classList.remove("show");
+},2800);
+
+}
+
+
+/* =========================
+CREATE OBJECT
+========================= */
+
+function createObject(kind,x,y,data={}){
+
+const el=document.createElement("div");
+
+el.className="object";
+
+el.style.left=x+"px";
+el.style.top=y+"px";
+
+el.dataset.id=++objectID;
+el.dataset.kind=kind;
+
+let html="";
+
+
+if(kind==="beaker"){
+
+html=`
+
+<div class="beaker">
+
+<div class="liquid"></div>
+
+<div class="beakerMarks"></div>
+
+</div>
+
+<div class="objectLabel">Beaker</div>
+
+`;
+
+}
+
+
+if(kind==="testtube"){
+
+html=`
+
+<div class="testTube">
+
+<div class="liquid"></div>
+
+<div class="bubble b1"></div>
+<div class="bubble b2"></div>
+<div class="bubble b3"></div>
+
+</div>
+
+<div class="objectLabel">Test Tube</div>
+
+`;
+
+}
+
+
+if(kind==="flask"){
+
+html=`
+
+<div class="flask">
+
+<div class="flaskNeck"></div>
+
+<div class="flaskBody">
+
+<div class="liquid"></div>
+
+</div>
+
+</div>
+
+<div class="objectLabel">Conical Flask</div>
+
+`;
+
+}
+
+
+if(kind==="stand"){
+
+html=`
+
+<div class="stand">
+
+<div class="standRod"></div>
+
+<div class="clampArm">
+
+<div class="clampJaw"></div>
+
+</div>
+
+<div class="standBase"></div>
+
+</div>
+
+<div class="objectLabel">Retort Stand</div>
+
+`;
+
+}
+
+
+if(kind==="bunsen" || kind==="spirit"){
+
+html=`
+
+<div class="burner ${kind==="spirit"?"spirit":""}">
+
+<div class="flame"></div>
+
+<div class="burnerStem"></div>
+
+<div class="airHole"></div>
+
+<div class="burnerBase"></div>
+
+</div>
+
+<div class="objectLabel">
+${kind==="spirit"?"Spirit Burner":"Bunsen Burner"}
+</div>
+
+`;
+
+}
+
+
+if(kind==="chemical"){
+
+html=`
+
+<div class="chemical">
+
+🧪
+
+</div>
+
+<div class="objectLabel">
+${data.formula}
+</div>
+
+`;
+
+}
+
+
+el.innerHTML=html;
+
+lab.appendChild(el);
+
+
+const obj={
+
+id:+el.dataset.id,
+
+el,
+
+kind,
+
+contents:[],
+
+heated:false,
+
+...data
+
+};
+
+
+objects.push(obj);
+
+makeDraggable(obj);
+
+return obj;
+
+}
+
+
+/* =========================
+DRAGGING
+========================= */
+
+function makeDraggable(obj){
+
+obj.el.addEventListener("pointerdown",e=>{
+
+if(e.target.closest(".objectLabel")) return;
+
+e.preventDefault();
+
+const rect=lab.getBoundingClientRect();
+
+const left=parseFloat(obj.el.style.left)||0;
+const top=parseFloat(obj.el.style.top)||0;
+
+drag={
+obj,
+offsetX:e.clientX-rect.left-left,
+offsetY:e.clientY-rect.top-top
+};
+
+obj.el.setPointerCapture(e.pointerId);
+
+obj.el.classList.add("dragging");
+
+});
+
+
+obj.el.addEventListener("pointermove",e=>{
+
+if(!drag || drag.obj!==obj) return;
+
+const rect=lab.getBoundingClientRect();
+
+let x=e.clientX-rect.left-drag.offsetX;
+let y=e.clientY-rect.top-drag.offsetY;
+
+x=Math.max(5,Math.min(lab.clientWidth-150,x));
+y=Math.max(5,Math.min(lab.clientHeight-230,y));
+
+obj.el.style.left=x+"px";
+obj.el.style.top=y+"px";
+
+});
+
+
+obj.el.addEventListener("pointerup",()=>{
+
+if(!drag || drag.obj!==obj) return;
+
+obj.el.classList.remove("dragging");
+
+drag=null;
+
+handleDrop(obj);
+
+});
+
+}
+
+
+/* =========================
+GEOMETRY
+========================= */
+
+function center(obj){
+
+const a=obj.el.getBoundingClientRect();
+const b=lab.getBoundingClientRect();
+
+return{
+
+x:a.left-b.left+a.width/2,
+y:a.top-b.top+a.height/2
+
+};
+
+}
+
+
+function overlap(a,b){
+
+const A=a.el.getBoundingClientRect();
+const B=b.el.getBoundingClientRect();
+
+return !(
+A.right<B.left+20 ||
+A.left>B.right-20 ||
+A.bottom<B.top+20 ||
+A.top>B.bottom-20
+);
+
+}
+
+
+/* =========================
+DROP LOGIC
+========================= */
+
+function handleDrop(obj){
+
+let target=objects.find(
+x=>x!==obj && overlap(obj,x)
+);
+
+if(target){
+
+handleCollision(obj,target);
+
+return;
+
+}
+
+snapToNearbyEquipment(obj);
+
+updateHeating();
+
+}
+
+
+/* =========================
+COLLISIONS
+========================= */
+
+function handleCollision(a,b){
+
+/* CHEMICAL INTO GLASSWARE */
+
+if(a.kind==="chemical" && isContainer(b)){
+
+pour(a,b);
+
+removeObject(a);
+
+return;
+
+}
+
+
+if(b.kind==="chemical" && isContainer(a)){
+
+pour(b,a);
+
+removeObject(b);
+
+return;
+
+}
+
+
+/* GLASSWARE + GLASSWARE */
+
+if(isContainer(a) && isContainer(b)){
+
+if(a.contents.length || b.contents.length){
+
+openCombine(a,b);
+
+return;
+
+}
+
+}
+
+
+/* STAND */
+
+if(a.kind==="stand" && isContainer(b)){
+
+attachToStand(b,a);
+
+return;
+
+}
+
+if(b.kind==="stand" && isContainer(a)){
+
+attachToStand(a,b);
+
+return;
+
+}
+
+
+/* BURNER */
+
+if((a.kind==="bunsen" || a.kind==="spirit") && isContainer(b)){
+
+attachToBurner(b,a);
+
+return;
+
+}
+
+if((b.kind==="bunsen" || b.kind==="spirit") && isContainer(a)){
+
+attachToBurner(a,b);
+
+return;
+
+}
+
+}
+
+
+/* =========================
+CONTAINER
+========================= */
+
+function isContainer(obj){
+
+return[
+"beaker",
+"testtube",
+"flask"
+].includes(obj.kind);
+
+}
+
+
+/* =========================
+POUR
+========================= */
+
+function pour(chemical,container){
+
+container.contents.push({
+
+name:chemical.name,
+formula:chemical.formula,
+color:chemical.color
+
+});
+
+updateLiquid(container);
+
+toast(
+chemical.formula+
+" poured into the "+
+container.kind
+);
+
+updateDetails(container);
+
+}
+
+
+/* =========================
+LIQUID
+========================= */
+
+function updateLiquid(container){
+
+const liquid=container.el.querySelector(".liquid");
+
+if(!liquid) return;
+
+if(!container.contents.length){
+
+liquid.style.height="0";
+
+return;
+
+}
+
+liquid.style.height=
+Math.min(
+80,
+18+container.contents.length*20
+)+"%";
+
+
+const color=
+container.contents[
+container.contents.length-1
+].color || "#4caaff";
+
+liquid.style.background=color+"cc";
+
+}
+
+
+/* =========================
+COMBINE
+========================= */
+
+function openCombine(a,b){
+
+pendingCombine={a,b};
+
+const first=
+a.contents.map(x=>x.formula).join(" + ");
+
+const second=
+b.contents.map(x=>x.formula).join(" + ");
+
+document.getElementById("combineDescription").innerHTML=
+
+"<b>"+
+first+
+"</b> + <b>"+
+second+
+"</b><br><br>"+
+"Do you want to combine them?";
+
+document
+.getElementById("combineModal")
+.classList.add("show");
+
+}
+
+
+function cancelCombine(){
+
+pendingCombine=null;
+
+document
+.getElementById("combineModal")
+.classList.remove("show");
+
+toast("Combine cancelled. Nothing changed.");
+
+}
+
+
+function confirmCombine(){
+
+if(!pendingCombine) return;
+
+const a=pendingCombine.a;
+const b=pendingCombine.b;
+
+let result=null;
+
+for(const x of a.contents){
+
+for(const y of b.contents){
+
+const found=
+reactions[
+reactionKey(x.name,y.name)
+];
+
+if(found){
+
+result=found;
+
+break;
+
+}
+
+}
+
+if(result) break;
+
+}
+
+
+if(!result){
+
+toast(
+"No programmed reaction for these substances."
+);
+
+cancelCombine();
+
+return;
+
+}
+
+
+/* PUT RESULT IN FIRST CONTAINER */
+
+a.contents=[{
+
+name:result.name,
+formula:result.formula,
+color:result.color
+
+}];
+
+b.contents=[];
+
+updateLiquid(a);
+updateLiquid(b);
+
+
+/* MOVE CONTAINERS TOGETHER */
+
+const B=parseFloat(b.el.style.left)||0;
+const BY=parseFloat(b.el.style.top)||0;
+
+a.el.style.left=B+"px";
+a.el.style.top=BY+"px";
+
+
+/* SPECIAL REACTION EFFECT */
+
+a.el.classList.add("heating");
+
+setTimeout(()=>{
+a.el.classList.remove("heating");
+},1500);
+
+
+toast(
+"⚗️ "+result.formula+
+" formed! "+
+result.message
+);
+
+pendingCombine=null;
+
+document
+.getElementById("combineModal")
+.classList.remove("show");
+
+updateDetails(a);
+
+}
+
+
+/* =========================
+REMOVE
+========================= */
+
+function removeObject(obj){
+
+obj.el.remove();
+
+objects=
+objects.filter(x=>x!==obj);
+
+}
+
+
+/* =========================
+STAND SNAP
+========================= */
+
+function attachToStand(container,stand){
+
+const s=center(stand);
+
+container.el.style.left=
+(s.x-45)+"px";
+
+container.el.style.top=
+(s.y-120)+"px";
+
+stand.el.classList.add("attached");
+
+container.attachedTo=stand;
+
+toast("🧲 Glassware snapped into the stand clamp.");
+
+updateHeating();
+
+}
+
+
+/* =========================
+BURNER SNAP
+========================= */
+
+function attachToBurner(container,burner){
+
+const b=center(burner);
+
+container.el.style.left=
+(b.x-55)+"px";
+
+container.el.style.top=
+(b.y-115)+"px";
+
+container.attachedTo=burner;
+
+toast("🔥 Glassware positioned over the flame.");
+
+updateHeating();
+
+}
+
+
+/* =========================
+NEARBY SNAP
+========================= */
+
+function snapToNearbyEquipment(obj){
+
+if(!isContainer(obj)) return;
+
+let best=null;
+let bestDistance=9999;
+
+for(const x of objects){
+
+if(x===obj) continue;
+
+if(
+x.kind!=="stand" &&
+x.kind!=="bunsen" &&
+x.kind!=="spirit"
+) continue;
+
+const a=center(obj);
+const b=center(x);
+
+const distance=
+Math.hypot(a.x-b.x,a.y-b.y);
+
+if(distance<160 && distance<bestDistance){
+
+best=x;
+bestDistance=distance;
+
+}
+
+}
+
+if(best){
+
+if(best.kind==="stand")
+attachToStand(obj,best);
+
+else
+attachToBurner(obj,best);
+
+}
+
+}
+
+
+/* =========================
+HEATING
+========================= */
+
+function updateHeating(){
+
+let anyHeating=false;
+
+for(const obj of objects){
+
+if(!isContainer(obj)) continue;
+
+let hot=false;
+
+for(const burner of objects){
+
+if(
+burner.kind!=="bunsen" &&
+burner.kind!=="spirit"
+) continue;
+
+const a=center(obj);
+const b=center(burner);
+
+const distance=
+Math.hypot(a.x-b.x,a.y-b.y);
+
+if(distance<125){
+
+hot=true;
+
+}
+
+}
+
+obj.heated=hot;
+
+obj.el.classList.toggle(
+"heating",
+hot
+);
+
+if(hot) anyHeating=true;
+
+}
+
+const dot=document.getElementById("heatDot");
+
+dot.classList.toggle("active",anyHeating);
+
+document.getElementById("heatText").textContent=
+anyHeating
+?"🔥 Container is heating"
+:"No container heating";
+
+}
+
+
+/* =========================
+DETAILS
+========================= */
+
+function updateDetails(obj){
+
+if(!obj) return;
+
+const box=document.getElementById("details");
+
+if(!isContainer(obj)) return;
+
+if(!obj.contents.length){
+
+box.innerHTML="<b>"+obj.kind+"</b><br>Empty.";
+
+return;
+
+}
+
+box.innerHTML=
+
+"<b>"+
+obj.kind+
+"</b><br><br>"+
+
+obj.contents
+.map(x=>
+x.name+
+" ("+
+x.formula+
+")"
+)
+.join("<br>")+
+
+(obj.heated
+?"<br><br>🔥 <b>Heating</b>"
+:"");
+
+}
+
+
+/* =========================
+PALETTE DRAG
+========================= */
+
+document
+.querySelectorAll(".paletteItem")
+.forEach(item=>{
+
+item.addEventListener(
+"dragstart",
+e=>{
+
+e.dataTransfer.setData(
+"kind",
+item.dataset.kind
+);
+
+e.dataTransfer.setData(
+"name",
+item.dataset.name||""
+);
+
+e.dataTransfer.setData(
+"formula",
+item.dataset.formula||""
+);
+
+e.dataTransfer.setData(
+"color",
+item.dataset.color||""
+);
+
+}
+);
+
+});
+
+
+/* =========================
+LAB DROP
+========================= */
+
+lab.addEventListener(
+"dragover",
+e=>e.preventDefault()
+);
+
+
+lab.addEventListener(
+"drop",
+e=>{
+
+e.preventDefault();
+
+const rect=
+lab.getBoundingClientRect();
+
+const kind=
+e.dataTransfer.getData("kind");
+
+const x=
+e.clientX-
+rect.left-
+50;
+
+const y=
+e.clientY-
+rect.top-
+70;
+
+
+if(kind==="chemical"){
+
+createObject(
+"chemical",
+x,
+y,
+{
+name:e.dataTransfer.getData("name"),
+formula:e.dataTransfer.getData("formula"),
+color:e.dataTransfer.getData("color")
+}
+);
+
+}
+
+else{
+
+createObject(
+kind,
+x,
+y
+);
+
+}
+
+});
+
+
+/* =========================
+CLEAR
+========================= */
+
+function clearLab(){
+
+objects.forEach(
+x=>x.el.remove()
+);
+
+objects=[];
+
+toast("Laboratory cleared.");
+
+}
+
+
+/* =========================
+PERIODIC TABLE
+========================= */
+
 const elements=[
-["H","Hydrogen",1,1,1],["He","Helium",2,18,1],["Li","Lithium",3,1,2],["Be","Beryllium",4,2,2],["B","Boron",5,13,2],["C","Carbon",6,14,2],["N","Nitrogen",7,15,2],["O","Oxygen",8,16,2],["F","Fluorine",9,17,2],["Ne","Neon",10,18,2],
-["Na","Sodium",11,1,3],["Mg","Magnesium",12,2,3],["Al","Aluminium",13,13,3],["Si","Silicon",14,14,3],["P","Phosphorus",15,15,3],["S","Sulfur",16,16,3],["Cl","Chlorine",17,17,3],["Ar","Argon",18,18,3],
-["K","Potassium",19,1,4],["Ca","Calcium",20,2,4],["Sc","Scandium",21,3,4],["Ti","Titanium",22,4,4],["V","Vanadium",23,5,4],["Cr","Chromium",24,6,4],["Mn","Manganese",25,7,4],["Fe","Iron",26,8,4],["Co","Cobalt",27,9,4],["Ni","Nickel",28,10,4],["Cu","Copper",29,11,4],["Zn","Zinc",30,12,4],["Ga","Gallium",31,13,4],["Ge","Germanium",32,14,4],["As","Arsenic",33,15,4],["Se","Selenium",34,16,4],["Br","Bromine",35,17,4],["Kr","Krypton",36,18,4],
-["Rb","Rubidium",37,1,5],["Sr","Strontium",38,2,5],["Y","Yttrium",39,3,5],["Zr","Zirconium",40,4,5],["Nb","Niobium",41,5,5],["Mo","Molybdenum",42,6,5],["Tc","Technetium",43,7,5],["Ru","Ruthenium",44,8,5],["Rh","Rhodium",45,9,5],["Pd","Palladium",46,10,5],["Ag","Silver",47,11,5],["Cd","Cadmium",48,12,5],["In","Indium",49,13,5],["Sn","Tin",50,14,5],["Sb","Antimony",51,15,5],["Te","Tellurium",52,16,5],["I","Iodine",53,17,5],["Xe","Xenon",54,18,5],
-["Cs","Cesium",55,1,6],["Ba","Barium",56,2,6],["La","Lanthanum",57,3,6],["Hf","Hafnium",72,4,6],["Ta","Tantalum",73,5,6],["W","Tungsten",74,6,6],["Re","Rhenium",75,7,6],["Os","Osmium",76,8,6],["Ir","Iridium",77,9,6],["Pt","Platinum",78,10,6],["Au","Gold",79,11,6],["Hg","Mercury",80,12,6],["Tl","Thallium",81,13,6],["Pb","Lead",82,14,6],["Bi","Bismuth",83,15,6],["Po","Polonium",84,16,6],["At","Astatine",85,17,6],["Rn","Radon",86,18,6],
-["Fr","Francium",87,1,7],["Ra","Radium",88,2,7],["Ac","Actinium",89,3,7],["Rf","Rutherfordium",104,4,7],["Db","Dubnium",105,5,7],["Sg","Seaborgium",106,6,7],["Bh","Bohrium",107,7,7],["Hs","Hassium",108,8,7],["Mt","Meitnerium",109,9,7],["Ds","Darmstadtium",110,10,7],["Rg","Roentgenium",111,11,7],["Cn","Copernicium",112,12,7],["Nh","Nihonium",113,13,7],["Fl","Flerovium",114,14,7],["Mc","Moscovium",115,15,7],["Lv","Livermorium",116,16,7],["Ts","Tennessine",117,17,7],["Og","Oganesson",118,18,7]];
-const lan=[["Ce","Cerium",58],["Pr","Praseodymium",59],["Nd","Neodymium",60],["Pm","Promethium",61],["Sm","Samarium",62],["Eu","Europium",63],["Gd","Gadolinium",64],["Tb","Terbium",65],["Dy","Dysprosium",66],["Ho","Holmium",67],["Er","Erbium",68],["Tm","Thulium",69],["Yb","Ytterbium",70],["Lu","Lutetium",71],["Th","Thorium",90],["Pa","Protactinium",91],["U","Uranium",92],["Np","Neptunium",93],["Pu","Plutonium",94],["Am","Americium",95],["Cm","Curium",96],["Bk","Berkelium",97],["Cf","Californium",98],["Es","Einsteinium",99],["Fm","Fermium",100],["Md","Mendelevium",101],["No","Nobelium",102],["Lr","Lawrencium",103]];
-const S={hcl:["Hydrochloric Acid","HCl",1],h2so4:["Sulfuric Acid","H₂SO₄",1],hno3:["Nitric Acid","HNO₃",1],ch3cooh:["Acetic Acid","CH₃COOH",3],naoh:["Sodium Hydroxide","NaOH",14],koh:["Potassium Hydroxide","KOH",14],caoh2:["Calcium Hydroxide","Ca(OH)₂",12],nacl:["Sodium Chloride","NaCl",7],cuso4:["Copper Sulfate","CuSO₄",5],caco3:["Calcium Carbonate","CaCO₃",9],nahco3:["Sodium Bicarbonate","NaHCO₃",8],na2co3:["Sodium Carbonate","Na₂CO₃",11],h2o:["Water","H₂O",7],o2:["Oxygen","O₂",7],co2:["Carbon Dioxide","CO₂",7],phen:["Phenolphthalein","Indicator",7]};
-const rules=[{a:["hcl","naoh"],eq:"HCl + NaOH → NaCl + H₂O",res:"H₂O",ph:7,msg:"Neutralization produces water.",gas:0},{a:["h2so4","naoh"],eq:"H₂SO₄ + 2NaOH → Na₂SO₄ + 2H₂O",res:"H₂O",ph:7,msg:"Sulfuric acid is neutralized.",gas:0},{a:["hcl","caco3"],eq:"2HCl + CaCO₃ → CaCl₂ + H₂O + CO₂",res:"H₂O",ph:7,msg:"CO₂ bubbles are released.",gas:1},{a:["hcl","nahco3"],eq:"HCl + NaHCO₃ → NaCl + H₂O + CO₂",res:"H₂O",ph:7,msg:"CO₂ fizzing occurs.",gas:1},{a:["cuso4","naoh"],eq:"CuSO₄ + 2NaOH → Cu(OH)₂ + Na₂SO₄",res:"Cu(OH)₂",ph:8,msg:"A blue precipitate forms.",gas:0},{a:["h","o"],eq:"2H₂ + O₂ → 2H₂O",res:"H₂O",ph:7,msg:"Hydrogen and oxygen form water.",gas:0,hot:1},{a:["h","o2"],eq:"2H₂ + O₂ → 2H₂O",res:"H₂O",ph:7,msg:"Hydrogen and oxygen form water.",gas:0,hot:1}];
-const cv=document.getElementById("cv"),x=cv.getContext("2d");let O=[],P=[],sm=[],pending=null,logs=[],ph=7,heat=25,drag=null,off={};
-function btn(t,label){let b=document.createElement("button");b.className="tool";b.textContent=label;b.onclick=()=>add(t);return b}
-["beaker","flask","tube","tripod","bunsen","spirit"].forEach((t,i)=>document.getElementById("equip").appendChild(btn(t,["🧪 Beaker","⚗️ Flask","🧫 Test Tube","🔺 Tripod Stand","🔥 Bunsen Burner","🔥 Spirit Burner"][i])));
-Object.entries(S).forEach(([k,v])=>document.getElementById("chem").appendChild(btn(k,"🧪 "+v[0]+" • "+v[1])));
-function add(t){let o={type:t,x:480+Math.random()*230,y:230+Math.random()*220};if(S[t]){o.name=S[t][0];o.formula=S[t][1];o.ph=S[t][2];o.content=o.formula;o.color=t==="cuso4"?"rgba(40,130,255,.28)":"rgba(120,200,255,.08)"}O.push(o);check();update()}
-function ae(e){add("element");let o=O.at(-1);o.symbol=e[0];o.name=e[1];o.number=e[2];o.formula=e[0];o.content=e[0]}
-function tile(e,container){let d=document.createElement("div");d.className="el";d.dataset.n=e[1].toLowerCase();d.innerHTML=`<span class=num>${e[2]}</span><b>${e[0]}</b><small>${e[1]}</small>`;d.onclick=()=>ae(e);container.appendChild(d)}
-let pt=document.getElementById("pt");for(let p=1;p<=7;p++)for(let g=1;g<=18;g++){let e=elements.find(a=>a[3]===g&&a[4]===p);let d=document.createElement("div");if(e)tile(e,pt);else{d.className="el blank";pt.appendChild(d)}}
-lan.forEach(e=>tile(e,document.getElementById("lan")));document.getElementById("search").oninput=e=>document.querySelectorAll(".el").forEach(d=>d.classList.toggle("blank",!!e.target.value&&!d.dataset.n?.includes(e.target.value.toLowerCase())));
-function vessel(o,w,h){x.save();x.strokeStyle="#cce0ef";x.lineWidth=3;x.beginPath();x.roundRect(o.x-w/2,o.y-h/2,w,h,8);x.stroke();if(o.content){x.fillStyle=o.color||"rgba(120,200,255,.08)";x.fillRect(o.x-w/2+5,o.y+3,w-10,h/2-7);x.fillStyle="#d9ebf6";x.font="11px Segoe UI";x.textAlign="center";x.fillText(o.content,o.x,o.y+32)}x.restore()}
-function draw(){x.clearRect(0,0,1100,680);x.fillStyle="#0d1d30";x.fillRect(0,0,1100,680);x.strokeStyle="#ffffff07";for(let i=0;i<1100;i+=45){x.beginPath();x.moveTo(i,0);x.lineTo(i,680);x.stroke()}for(let i=0;i<680;i+=45){x.beginPath();x.moveTo(0,i);x.lineTo(1100,i);x.stroke()}O.forEach(o=>{if(o.type==="beaker")vessel(o,100,120);else if(o.type==="flask")flask(o);else if(o.type==="tube")tube(o);else if(o.type==="tripod")tripod(o);else if(o.type==="bunsen"||o.type==="spirit")burner(o);else atom(o)});P.forEach(p=>{p.y-=p.v;if(p.y<80)p.y=500;x.fillStyle="#d9f8ff99";x.beginPath();x.arc(p.x,p.y,p.s,0,7);x.fill()});sm.forEach(s=>{s.y-=.4;s.a-=.001;if(s.a<.02){s.y=390;s.a=.3}x.fillStyle=`rgba(190,200,210,${s.a})`;x.beginPath();x.arc(s.x,s.y,s.r,0,7);x.fill()});requestAnimationFrame(draw)}
-function flask(o){x.save();x.strokeStyle="#cce0ef";x.lineWidth=3;x.beginPath();x.moveTo(o.x-16,o.y-60);x.lineTo(o.x-16,o.y-10);x.lineTo(o.x-58,o.y+45);x.quadraticCurveTo(o.x,o.y+73,o.x+58,o.y+45);x.lineTo(o.x+16,o.y-10);x.lineTo(o.x+16,o.y-60);x.stroke();if(o.content){x.fillStyle=o.color||"rgba(120,200,255,.08)";x.beginPath();x.moveTo(o.x-42,o.y+35);x.lineTo(o.x+42,o.y+35);x.lineTo(o.x+14,o.y-7);x.lineTo(o.x-14,o.y-7);x.closePath();x.fill();x.fillStyle="#fff";x.font="11px Segoe UI";x.textAlign="center";x.fillText(o.content,o.x,o.y+30)}x.restore()}
-function tube(o){x.save();x.strokeStyle="#cce0ef";x.lineWidth=3;x.beginPath();x.moveTo(o.x-18,o.y-55);x.lineTo(o.x-18,o.y+28);x.arc(o.x,o.y+28,18,Math.PI,0);x.lineTo(o.x+18,o.y-55);x.stroke();if(o.content){x.fillStyle=o.color||"rgba(120,200,255,.08)";x.fillRect(o.x-15,o.y+5,30,30)}x.restore()}
-function tripod(o){x.strokeStyle="#8a9caf";x.lineWidth=6;x.beginPath();x.moveTo(o.x-65,o.y-15);x.lineTo(o.x+65,o.y-15);x.moveTo(o.x-48,o.y-15);x.lineTo(o.x-72,o.y+65);x.moveTo(o.x+48,o.y-15);x.lineTo(o.x+72,o.y+65);x.moveTo(o.x,o.y-15);x.lineTo(o.x,o.y+65);x.stroke()}
-function burner(o){x.fillStyle="#52667c";x.fillRect(o.x-28,o.y+15,56,18);x.fillRect(o.x-11,o.y-48,22,63);x.fillStyle="#8094a8";x.fillRect(o.x-18,o.y-58,36,9);let y=o.y-67,g=x.createRadialGradient(o.x,y,2,o.x,y,38);g.addColorStop(0,"#fff");g.addColorStop(.25,"#fde68a");g.addColorStop(.55,"#38bdf8");g.addColorStop(1,"transparent");x.fillStyle=g;x.beginPath();x.moveTo(o.x,y+25);x.quadraticCurveTo(o.x-24,y,o.x+Math.sin(Date.now()/100)*3,y-35);x.quadraticCurveTo(o.x+24,y,o.x,y+25);x.fill()}
-function atom(o){let r=30;x.fillStyle="#0d1e32";x.strokeStyle="#22d3ee";x.lineWidth=2;x.beginPath();x.arc(o.x,o.y,r,0,7);x.fill();x.stroke();x.fillStyle="#fff";x.font="bold 16px Segoe UI";x.textAlign="center";x.fillText(o.symbol||o.formula,o.x,o.y+5);let n=Math.min(8,Math.max(1,(o.number||1)%9));for(let i=0;i<n;i++){let a=Date.now()/700+i/n*7;x.fillStyle="#60a5fa";x.beginPath();x.arc(o.x+43*Math.cos(a),o.y+43*Math.sin(a),3,0,7);x.fill()}x.fillStyle="#9bb0c6";x.font="9px Segoe UI";x.fillText(o.name||"",o.x,o.y+48)}
-cv.onmousedown=e=>{let r=cv.getBoundingClientRect(),mx=(e.clientX-r.left)*1100/r.width,my=(e.clientY-r.top)*680/r.height;for(let i=O.length-1;i>=0;i--)if(Math.hypot(O[i].x-mx,O[i].y-my)<75){drag=O[i];off={x:mx-drag.x,y:my-drag.y};break}};cv.onmousemove=e=>{if(!drag)return;let r=cv.getBoundingClientRect();drag.x=(e.clientX-r.left)*1100/r.width-off.x;drag.y=(e.clientY-r.top)*680/r.height-off.y;heatCalc()};cv.onmouseup=()=>{if(drag)check();drag=null};
-function check(){let a=O.at(-1),b=O.find(o=>o!==a&&Math.hypot(o.x-a.x,o.y-a.y)<100);if(!b)return;let r=rules.find(z=>z.a.every(t=>[a.type,b.type].includes(t)));if(!r)return;pending={a,b,r};document.getElementById("rxt").innerHTML=`<b>${r.eq}</b><br><br>${r.msg}<br><br>Choose Combine or Cancel.`;document.getElementById("rx").style.display="flex";document.getElementById("stat").textContent="Reaction detected"}
-document.getElementById("combine").onclick=()=>{let q=pending.r,x=(pending.a.x+pending.b.x)/2,y=(pending.a.y+pending.b.y)/2;O=O.filter(o=>o!==pending.a&&o!==pending.b);O.push({type:"beaker",x,y,content:q.res,color:q.res==="Cu(OH)₂"?"rgba(30,130,255,.35)":"rgba(120,200,255,.08)"});ph=q.ph;if(q.gas){for(let i=0;i<30;i++)P.push({x:x+(Math.random()-.5)*40,y:y+20,v:.5+Math.random(),s:2+Math.random()*3});for(let i=0;i<18;i++)sm.push({x:x+(Math.random()-.5)*30,y:y-10,r:5+Math.random()*8,a:.3})}if(q.hot)heat=500;logs.push({eq:q.eq,t:new Date().toLocaleTimeString()});renderLogs();closeM("rx");pending=null;document.getElementById("stat").textContent="Completed";update();toast("⚗️ Reaction completed")}
-document.getElementById("cancel").onclick=()=>{pending=null;closeM("rx");document.getElementById("stat").textContent="Ready"};
-function heatCalc(){heat=25;let ts=O.filter(o=>o.type==="tripod"),bs=O.filter(o=>o.type==="bunsen"||o.type==="spirit"),vs=O.filter(o=>["beaker","flask","tube"].includes(o.type));for(let v of vs)for(let t of ts)if(Math.abs(v.x-t.x)<80&&Math.abs(v.y-t.y+65)<85)for(let b of bs)if(Math.abs(b.x-t.x)<80&&b.y>t.y-30&&b.y<t.y+110)heat=Math.max(heat,b.type==="bunsen"?850:550);document.getElementById("heat").textContent=heat+"°C"}
-function update(){document.getElementById("cnt").textContent=O.length;document.getElementById("ph").textContent=ph.toFixed(1);heatCalc()}
-function renderLogs(){document.getElementById("logs").innerHTML=logs.length?logs.slice().reverse().map(a=>`<div class=reaction><b>${a.eq}</b><br><small>${a.t}</small></div>`).join(""):"No reactions yet."}
-function closeM(id){document.getElementById(id).style.display="none"}function toast(s){let t=document.getElementById("toast");t.textContent=s;t.style.display="block";setTimeout(()=>t.style.display="none",1800)}
-document.getElementById("clear").onclick=()=>{O=[];P=[];sm=[];ph=7;heat=25;update();toast("🧹 Workbench cleared")};document.getElementById("lib").onclick=()=>document.getElementById("libm").style.display="flex";document.getElementById("help").onclick=()=>document.getElementById("helpm").style.display="flex";document.addEventListener("keydown",e=>{if(e.key==="Escape")document.querySelectorAll(".modal").forEach(m=>m.style.display="none")});renderLogs();update();draw();
-</script></body></html>
+
+["H","Hydrogen"],
+["He","Helium"],
+["Li","Lithium"],
+["Be","Beryllium"],
+["B","Boron"],
+["C","Carbon"],
+["N","Nitrogen"],
+["O","Oxygen"],
+["F","Fluorine"],
+["Ne","Neon"],
+["Na","Sodium"],
+["Mg","Magnesium"],
+["Al","Aluminium"],
+["Si","Silicon"],
+["P","Phosphorus"],
+["S","Sulfur"],
+["Cl","Chlorine"],
+["Ar","Argon"],
+["K","Potassium"],
+["Ca","Calcium"],
+["Sc","Scandium"],
+["Ti","Titanium"],
+["V","Vanadium"],
+["Cr","Chromium"],
+["Mn","Manganese"],
+["Fe","Iron"],
+["Co","Cobalt"],
+["Ni","Nickel"],
+["Cu","Copper"],
+["Zn","Zinc"],
+["Ag","Silver"],
+["Au","Gold"],
+["Hg","Mercury"],
+["Pb","Lead"]
+];
+
+document.getElementById("periodic").innerHTML=
+elements.map(
+x=>
+`
+<div class="element" title="${x[1]}">
+<strong>${x[0]}</strong>
+${x[1]}
+</div>
+`
+).join("");
+
+
+function showPeriodic(){
+
+document
+.querySelector(".infoPanel")
+.scrollTo({
+top:document
+.querySelector(".infoPanel")
+.scrollHeight,
+behavior:"smooth"
+});
+
+}
+
+
+/* =========================
+STARTER LAB
+========================= */
+
+createObject(
+"stand",
+70,
+230
+);
+
+createObject(
+"bunsen",
+290,
+350
+);
+
+createObject(
+"beaker",
+470,
+300
+);
+
+createObject(
+"testtube",
+650,
+280
+);
+
+createObject(
+"flask",
+770,
+290
+);
+
+updateHeating();
+
+</script>
+
+</body>
+</html>
